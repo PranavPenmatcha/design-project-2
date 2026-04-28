@@ -15,12 +15,13 @@ extern float      g_tremorPeakHz;      // energy-weighted tremor-band peak
 extern float      g_tremorEnergy;      // (energyMag + energyZ) / 2 in tremor band
 extern float      g_tremorRatio;       // tremor_energy / total_energy — MUST dominate
 extern float      g_widePeakHz;        // energy-weighted full-band (0.5–12 Hz) peak
+extern float      g_peakSeparationHz;  // |wide peak Hz − tremor peak Hz|
 
-// Combined classifier. Uses BOTH the full-band and tremor-band features:
-//   - widePeak / wideEnergy : where the dominant motion actually lives
-//   - tremorPeak / tremorEnergy : strength of high-freq sub-band
-// A tremor is only declared when the tremor band dominates total energy AND
-// the wide-band peak agrees that the dominant motion is in tremor frequencies.
+// Uses full-band dominant frequency + tremor-band peak frequency together:
+//   - widePeak / wideEnergy (0.5–12 Hz): dominant motion frequency
+//   - tremorPeak / tremorEnergy (3–12 Hz): oscillation peak in tremor band
+// Presence requires energy ratio + tremorHz in band + spectral agreement between the two peaks.
+// Subtype uses tremorHz, axis peak spread, peak separation |wide−tremor|, and energy tiers.
 void classifyTremorKind(float widePeakMag, float widePeakZ,
                         float wideEnergyMag, float wideEnergyZ,
                         float tremorPeakMag, float tremorPeakZ,

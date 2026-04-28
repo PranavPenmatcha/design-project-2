@@ -1,5 +1,6 @@
 #include "algorithms.h"
 #include "config.h"
+#include "tremor_classifier.h"
 
 TremorType  g_tremorType  = TREMOR_NONE;
 MotionState g_motionState = MOTION_STOPPED;
@@ -11,29 +12,14 @@ MotionState classifyMotion(float cadence, float hzMag, float hzZ) {
   return strideFreq ? MOTION_WALKING : MOTION_STOPPED;
 }
 
-TremorType classifyTremor(float hzMag, float hzZ, float energyMag, float energyZ) {
-  const float energy = (energyMag + energyZ) * 0.5f;
-
-  if (energy >= DYSKINESIA_ENERGY_MIN) {
-    const float hz = (hzMag * energyMag + hzZ * energyZ) /
-                     (energyMag + energyZ + 1e-30f);
-    if (hz >= 4.0f && hz <= 12.0f) return TREMOR_DYSKINESIA;
+void syncTremorTypeFromKind(void) {
+  switch (g_tremorKind) {
+    case TR_NONE:         g_tremorType = TREMOR_NONE; break;
+    case TR_REGULAR:      g_tremorType = TREMOR_REGULAR; break;
+    case TR_DYSKINESIA:   g_tremorType = TREMOR_DYSKINESIA; break;
+    case TR_BRADYKINESIA: g_tremorType = TREMOR_BRADYKINESIA; break;
+    default:              g_tremorType = TREMOR_NONE; break;
   }
-
-  if (energy < TREMOR_ENERGY_MIN) {
-    if (energy >= BRADYKINESIA_ENERGY_MIN && energy < BRADYKINESIA_ENERGY_MAX) {
-      const float hz = (hzMag * energyMag + hzZ * energyZ) /
-                       (energyMag + energyZ + 1e-30f);
-      if (hz > 0.0f && hz < 2.5f) return TREMOR_BRADYKINESIA;
-    }
-    return TREMOR_NONE;
-  }
-
-  const float hz = (hzMag * energyMag + hzZ * energyZ) /
-                   (energyMag + energyZ + 1e-30f);
-  if (hz >= 3.0f && hz <= 6.5f) return TREMOR_REGULAR;
-  if (hz >  0.0f && hz <  2.5f) return TREMOR_BRADYKINESIA;
-  return TREMOR_NONE;
 }
 
 const char* tremorName(TremorType t) {
@@ -46,9 +32,6 @@ const char* tremorName(TremorType t) {
   }
 }
 
-void updateClassifiers(float cadence, float hzMag, float hzZ,
-                       float hzTremorMag, float hzTremorZ,
-                       float energyTremorMag, float energyTremorZ) {
+void updateClassifiers(float cadence, float hzMag, float hzZ) {
   g_motionState = classifyMotion(cadence, hzMag, hzZ);
-  g_tremorType  = classifyTremor(hzTremorMag, hzTremorZ, energyTremorMag, energyTremorZ);
 }

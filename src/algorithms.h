@@ -17,8 +17,10 @@ extern TremorType  g_tremorType;
 extern MotionState g_motionState;
 
 MotionState classifyMotion(float cadence, float hzMag, float hzZ);
-TremorType  classifyTremor(float hzMag, float hzZ, float energyMag, float energyZ);
+
+/** Mirror `g_tremorKind` after `runConditionPipeline()` — single source of tremor classification. */
+void syncTremorTypeFromKind(void);
+
 const char* tremorName(TremorType t);
-void        updateClassifiers(float cadence, float hzMag, float hzZ,
-                              float hzTremorMag, float hzTremorZ,
-                              float energyTremorMag, float energyTremorZ);
+
+void updateClassifiers(float cadence, float hzMag, float hzZ);

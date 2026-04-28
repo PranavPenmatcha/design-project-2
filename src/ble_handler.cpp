@@ -12,7 +12,8 @@ static BLECharacteristic chrCadence   ("57a70002-9350-11ed-a1eb-0242ac120002");
 static BLECharacteristic chrState     ("57a70003-9350-11ed-a1eb-0242ac120002");
 static BLECharacteristic chrPeakHzMag ("57a70004-9350-11ed-a1eb-0242ac120002");
 static BLECharacteristic chrPeakHzZ   ("57a70007-9350-11ed-a1eb-0242ac120002");
-static BLECharacteristic chrBandEnergy("57a70006-9350-11ed-a1eb-0242ac120002");
+static BLECharacteristic chrBandEnergy  ("57a70006-9350-11ed-a1eb-0242ac120002");
+static BLECharacteristic chrPeakHzMotion("57a70008-9350-11ed-a1eb-0242ac120002");
 
 static void setupWalkCharacteristics() {
   walkSvc.begin();
@@ -52,6 +53,12 @@ static void setupWalkCharacteristics() {
   chrBandEnergy.setFixedLen(4);
   chrBandEnergy.begin();
   chrBandEnergy.writeFloat(0.0f);
+
+  chrPeakHzMotion.setProperties(CHR_PROPS_NOTIFY | CHR_PROPS_READ);
+  chrPeakHzMotion.setPermission(SECMODE_OPEN, SECMODE_NO_ACCESS);
+  chrPeakHzMotion.setFixedLen(4);
+  chrPeakHzMotion.begin();
+  chrPeakHzMotion.writeFloat(0.0f);
 }
 
 static void connectCallback(uint16_t conn_handle) {
@@ -107,7 +114,7 @@ void logSerialData(uint16_t steps, float cadence, float hzMag, float hzZ, float 
 }
 
 // CSV via Nordic UART: millis,steps,cadenceSpm,hzMag,hzZ,bandEnergy
-void pushBleData(uint16_t steps, float cadence, float hzMag, float hzZ, float engBand, uint8_t motionState) {
+void pushBleData(uint16_t steps, float cadence, float hzMag, float hzZ, float hzMotion, float engBand, uint8_t motionState) {
   if (!Bluefruit.connected()) return;
 
   chrSteps.notify32(static_cast<uint32_t>(steps));
@@ -115,6 +122,7 @@ void pushBleData(uint16_t steps, float cadence, float hzMag, float hzZ, float en
   chrState.notify8(motionState);
   chrPeakHzMag.notify(&hzMag, sizeof(hzMag));
   chrPeakHzZ.notify(&hzZ, sizeof(hzZ));
+  chrPeakHzMotion.notify(&hzMotion, sizeof(hzMotion));
   chrBandEnergy.notify(&engBand, sizeof(engBand));
 
   if (bleuart.notifyEnabled()) {
